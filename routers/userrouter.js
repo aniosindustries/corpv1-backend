@@ -52,7 +52,7 @@ router.post("/register", async (req, res) => {
         }, process.env.JWT_TOKEN
         
         );
-        res.cookie("token", token, {httpOnly: true}).send();
+        res.cookie("token", token, {httpOnly: true, sameSite: process.env.NODE_ENV === 'development' ? 'lax' : process.env.NODE_ENV === 'production' && 'none', secure: process.env.NODE_ENV === 'development' ? false : process.env.NODE_ENV === 'production' && true}).send();
     }
     catch (err) {
         res.status(500).send();
@@ -75,7 +75,7 @@ router.post('/login', async (req, res) =>{
             return res.status(401).json({msg: 'Wrong username or password'});
         }
         const token = jwt.sign({id: existingUser._id}, process.env.JWT_TOKEN, {expiresIn: '1h'});
-        res.cookie('token', token, {httpOnly: true}).send();
+        res.cookie('token', token, {httpOnly: true, sameSite: process.env.NODE_ENV === 'development' ? 'lax' : process.env.NODE_ENV === 'production' && 'none', secure: process.env.NODE_ENV === 'development' ? false : process.env.NODE_ENV === 'production' && true}).send();
     } catch (err) {
         console.error(err.message);
         res.status(500).send();
@@ -96,7 +96,16 @@ router.get('/loggedIn', (req, res) => {
 
 router.get('/logOut', (req, res) => {
     try{
-        res.clearCookie('token').send();
+        res.clearCookie('token', '', {
+            httpOnly: true,
+            sameSite: process.env.NODE_ENV === 'development'
+             ? 'lax' 
+             : process.env.NODE_ENV === 'production' && 'none',
+              secure: process.env.NODE_ENV === 'development' 
+              ? false 
+              : process.env.NODE_ENV === 'production' && true,
+              expires: new Date(0),
+        }).send();
     } catch(err){
         console.log(err);
        return res.json(null);
